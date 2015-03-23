@@ -1,1 +1,1 @@
-# terraform-vsphere
+# Terraform VMWare vSphere plug-in
