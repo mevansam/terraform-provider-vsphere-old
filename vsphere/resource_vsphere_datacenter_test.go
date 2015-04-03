@@ -31,13 +31,13 @@ func TestAccVsphereDatacenter_normal(t *testing.T) {
 		} )
 }
 
-func testAccCheckDatacenterExists(n string) resource.TestCheckFunc {
+func testAccCheckDatacenterExists(resource string) resource.TestCheckFunc {
 	
 	return func(s *terraform.State) error {
-		
-		rs, ok := s.RootModule().Resources[n]
+	
+		rs, ok := s.RootModule().Resources[resource]
 		if !ok {
-			return fmt.Errorf("datacenter '%s' not found in terraform state", n)
+			return fmt.Errorf("datacenter '%s' not found in terraform state", resource)
 		}
 		
 		name := rs.Primary.ID
@@ -59,12 +59,12 @@ func testAccCheckDatacenterExists(n string) resource.TestCheckFunc {
 
 func testAccCheckDatacenterDestroy(s *terraform.State) error {
 
-	const n = "vsphere_datacenter.dc1"
+	const resource = "vsphere_datacenter.dc1"
 	const name = "datacenter1"
 
-	_, ok := s.RootModule().Resources[n]
+	_, ok := s.RootModule().Resources[resource]
 	if ok {
-		return fmt.Errorf("datacenter '%s' still exists in the terraform state", n)
+		return fmt.Errorf("datacenter '%s' still exists in the terraform state", resource)
 	}
 	
 	log.Printf("[DEBUG] Checking if datacenter '%s' has been destroyed", name)
@@ -79,7 +79,7 @@ func testAccCheckDatacenterDestroy(s *terraform.State) error {
 		log.Printf("[DEBUG] API response: %s", err.Error())
 		return nil
 	}
-	return fmt.Errorf("datacenter '%s' was not destroyed as expected", n);
+	return fmt.Errorf("datacenter '%s' was not destroyed as expected", resource);
 }
 
 const testAccDatacenterConfig = `
