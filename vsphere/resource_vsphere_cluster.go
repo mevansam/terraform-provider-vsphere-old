@@ -34,7 +34,6 @@ func resourceVsphereCluster() *schema.Resource {
 				Type: schema.TypeString,
 				Required: true,
 			},
-			
 			"drs": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -55,7 +54,6 @@ func resourceVsphereCluster() *schema.Resource {
 					},
 				},
 			},
-
 			"ha": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -92,6 +90,10 @@ func resourceVsphereCluster() *schema.Resource {
 					},
 				},
 			},
+			"keep": &schema.Schema{
+				Type: schema.TypeBool,
+				Optional: true,
+			},			
 		},
 	}
 }
@@ -141,13 +143,13 @@ func getClusterDrsConfigInfo(d *schema.ResourceData) (*types.ClusterDrsConfigInf
 		drsConfig := &types.ClusterDrsConfigInfo {}
 		drsConfig.Enabled = true
 		
-		if v := d.Get("drs.0.enable_vm_automation_override"); v != nil {
+		if v, ok := d.GetOk("drs.0.enable_vm_automation_override"); ok {
 			drsConfig.EnableVmBehaviorOverrides, _ = v.(bool)
 		}
-		if v := d.Get("drs.0.migration_threshold"); v != nil {
+		if v, ok := d.GetOk("drs.0.migration_threshold"); ok {
 			drsConfig.VmotionRate, _ = v.(int)
 		}
-		if v := d.Get("drs.0.default_automation_level"); v != nil {
+		if v, ok := d.GetOk("drs.0.default_automation_level"); ok {
 			defaultVmBehavior := types.DrsBehavior(v.(string))
 			if defaultVmBehavior != types.DrsBehaviorManual && 
 				defaultVmBehavior != types.DrsBehaviorPartiallyAutomated && 
@@ -173,7 +175,7 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 		dasConfig := &types.ClusterDasConfigInfo {}
 		dasConfig.Enabled = true
 		
-		if v := d.Get("ha.0.vm_monitoring"); v != nil {
+		if v, ok := d.GetOk("ha.0.vm_monitoring"); ok {
 			vmMonitoring := v.(string)
 			if vmMonitoring != "vmAndAppMonitoring" && 
 				vmMonitoring != "vmMonitoringOnly" && 
@@ -182,7 +184,7 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 			}
 			dasConfig.VmMonitoring = vmMonitoring
 		}
-		if v := d.Get("ha.0.host_monitoring"); v != nil {
+		if v, ok := d.GetOk("ha.0.host_monitoring"); ok {
 			hostMonitoring := v.(string)
 			if hostMonitoring != "enabled" &&
 				hostMonitoring != "disabled" {
@@ -190,17 +192,20 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 			}
 			dasConfig.HostMonitoring = hostMonitoring
 		}
-		if v := d.Get("ha.0.admissionControlEnabled"); v != nil {
+		if v, ok := d.GetOk("ha.0.admissionControlEnabled"); ok {
 			dasConfig.AdmissionControlEnabled, _ = v.(bool)
 		}
 		if d.Get("ha.0.admissionControlPolicy.#").(int) > 0 {
 			var props []types.DynamicProperty
-			for _, p := range d.Get("ha.0.admissionControlPolicy").([]map[string]interface{}) {
-				if p != nil {
-					props = append(props, types.DynamicProperty {
-							Name: p["name"].(string),
-							Val: p["value"].(string),
-						} )
+			v, ok := d.GetOk("ha.0.admissionControlPolicy")
+			if ok {
+				for _, p := range v.([]map[string]interface{}) {
+					if p != nil {
+						props = append(props, types.DynamicProperty {
+								Name: p["name"].(string),
+								Val: p["value"].(string),
+							} )
+					}
 				}
 			}
 		}
@@ -310,20 +315,23 @@ func resourceVsphereClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceVsphereClusterDelete(d *schema.ResourceData, meta interface{}) error {
 
-	cluster, err := findCluster(d, meta)
-	if err != nil {
-		return err
-	}
-	
-	log.Printf("[DEBUG] Deleting cluster: %s", d.Id())
-	
-	task, err := cluster.Destroy(context.Background())
-	if err != nil {
-		return err
-	}
-  	err = task.Wait(context.Background())
-	if err != nil {
-		return err
+	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
+		
+		cluster, err := findCluster(d, meta)
+		if err != nil {
+			return err
+		}
+		
+		log.Printf("[DEBUG] Deleting cluster: %s", d.Id())
+		
+		task, err := cluster.Destroy(context.Background())
+		if err != nil {
+			return err
+		}
+	  	err = task.Wait(context.Background())
+		if err != nil {
+			return err
+		}
 	}
 	
 	return nil

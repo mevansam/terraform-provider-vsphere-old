@@ -16,7 +16,11 @@ import (
 	"github.com/vmware/govmomi/find"
 )
 
+var keepDatacenter bool
+
 func TestAccVsphereDatacenter_normal(t *testing.T) {
+	
+	keepDatacenter = false
 	
 	_, filename, _, _ := runtime.Caller(0)
 	ut := os.Getenv("UNIT_TEST")
@@ -32,6 +36,7 @@ func TestAccVsphereDatacenter_normal(t *testing.T) {
 						Config: testAccDatacenterConfig,
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckDatacenterExists("vsphere_datacenter.dc1"),
+							resource.TestCheckResourceAttr("vsphere_datacenter.dc1", "name", "datacenter1"),
 						),
 					},
 				},
@@ -61,6 +66,8 @@ func testAccCheckDatacenterExists(resource string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
+		
+		keepDatacenter = (rs.Primary.Attributes["keep"] == "true")
 		return nil;
 	}
 }
@@ -75,7 +82,6 @@ func testAccCheckDatacenterDestroy(s *terraform.State) error {
 		return fmt.Errorf("datacenter '%s' still exists in the terraform state", resource)
 	}
 	
-	log.Printf("[DEBUG] Checking if datacenter '%s' has been destroyed", name)
 	client := testAccProvider.Meta().(*govmomi.Client)
 	if client == nil {
 		fmt.Errorf("client is nil")
@@ -84,15 +90,20 @@ func testAccCheckDatacenterDestroy(s *terraform.State) error {
 	finder := find.NewFinder(client.Client, false)
 	_, err := finder.Datacenter(context.Background(), name)
 	if err != nil {
-		log.Printf("[DEBUG] API response: %s", err.Error())
-		return nil
+		log.Printf("[DEBUG] Datacenter destroyed as expected. API response was: %s", err.Error())
+	} else if keepDatacenter {
+		log.Printf("[DEBUG] Datacenter not destroyed as expected")
+	} else {
+		return fmt.Errorf("datacenter '%s' was not destroyed as expected", resource);
 	}
-	return fmt.Errorf("datacenter '%s' was not destroyed as expected", resource);
+	return nil
 }
 
 const testAccDatacenterConfig = `
 
 resource "vsphere_datacenter" "dc1" {
 	name = "datacenter1"
+
+#	keep = true
 }
 `

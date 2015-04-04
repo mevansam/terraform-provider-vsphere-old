@@ -19,7 +19,11 @@ import (
 	"github.com/kr/pretty"
 )
 
+var keepClusters bool // keep must have the same value for both test clusters. otherwise the last value wins.
+
 func TestAccVsphereCluster_normal(t *testing.T) {
+	
+	keepClusters = false
 	
 	_, filename, _, _ := runtime.Caller(0)
 	ut := os.Getenv("UNIT_TEST")
@@ -36,6 +40,16 @@ func TestAccVsphereCluster_normal(t *testing.T) {
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckClusterExists("vsphere_cluster.c1"),
 							testAccCheckClusterExists("vsphere_cluster.c2"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c1", "name", "cluster1"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c1", "drs.0.default_automation_level", "manual"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c1", "drs.0.migration_threshold", "2"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c1", "ha.0.host_monitoring", "disabled"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c1", "ha.0.vm_monitoring", "vmMonitoringOnly"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c2", "name", "cluster2"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c2", "drs.0.default_automation_level", "partiallyAutomated"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c2", "drs.0.migration_threshold", "4"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c2", "ha.0.host_monitoring", "enabled"),
+							resource.TestCheckResourceAttr("vsphere_cluster.c2", "ha.0.vm_monitoring", "vmAndAppMonitoring"),
 						),
 					},
 				},
@@ -43,7 +57,7 @@ func TestAccVsphereCluster_normal(t *testing.T) {
 	}
 }
 
-func findTestCluster(datacenter_name string, cluster_name string) (*object.ClusterComputeResource, error) {
+func findTestCluster(datacenterName string, clusterName string) (*object.ClusterComputeResource, error) {
 	
 	client := testAccProvider.Meta().(*govmomi.Client)
 	if client == nil {
@@ -51,16 +65,16 @@ func findTestCluster(datacenter_name string, cluster_name string) (*object.Clust
 	}
 	
 	finder := find.NewFinder(client.Client, false)
-	datacenter, err := finder.Datacenter(context.Background(), datacenter_name)
+	datacenter, err := finder.Datacenter(context.Background(), datacenterName)
 	if err != nil {
-		log.Printf("[ERROR] Unable find datacenter: '%s'", datacenter_name)
+		log.Printf("[ERROR] Unable find datacenter: '%s'", datacenterName)
 		return nil, err
 	}
 	finder.SetDatacenter(datacenter)
 
-	cluster, err := finder.Cluster(context.Background(), cluster_name)
+	cluster, err := finder.Cluster(context.Background(), clusterName)
 	if err != nil {
-		log.Printf("[ERROR] Unable find cluster: '%s'", cluster_name)
+		log.Printf("[ERROR] Unable find cluster: '%s'", clusterName)
 		return nil, err
 	}
 	
@@ -80,16 +94,16 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 
 		attributes := rs.Primary.Attributes
 
-		cluster_name := rs.Primary.ID
-		datacenter_name := attributes["datacenter_id"]
+		clusterName := rs.Primary.ID
+		datacenterName := attributes["datacenter_id"]
 
-		cluster, err := findTestCluster(datacenter_name, cluster_name)
+		cluster, err := findTestCluster(datacenterName, clusterName)
 		if err != nil {
 			return err
 		}		
 		config, err := cluster.Configuration(context.Background())
 		if err != nil {
-			log.Printf("[ERROR] Unable read configuration for cluster '%s'.", cluster_name)
+			log.Printf("[ERROR] Unable read configuration for cluster '%s'.", clusterName)
 			return err
 		}
 
@@ -118,6 +132,7 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 			fmt.Errorf("high-availability adminission control attribute mis-match")
 		}
 		
+		keepClusters = (attributes["keep"] == "true")
 		return nil;
 	}
 }
@@ -144,20 +159,24 @@ func testAccCheckClusterDestroy(s *terraform.State) error {
 		return fmt.Errorf("cluster '%s' still exists in the terraform state", cluster2)
 	}
 	
-	log.Printf("[DEBUG] Checking if datacenter '%s' and cluster '%s' has been destroyed", datacenter, cluster1)
 	_, err = findTestCluster(datacenter, cluster1)
-	if err == nil {
-		return fmt.Errorf("datacenter '%s' and cluster '%s' was not destroyed as expected", datacenter, cluster1);
-	}		
-	log.Printf("[DEBUG] API response: %s", err.Error())
+	if err != nil {
+		log.Printf("[DEBUG] Cluster '%s' destroyed as expected. API response was: %s", cluster1, err.Error())
+	} else if keepClusters {
+		log.Printf("[DEBUG] Cluster '%s' not destroyed as expected.", cluster1)
+	} else {
+		return fmt.Errorf("datacenter '%s' and cluster '%s' was not destroyed as expected", datacenter, cluster1);		
+	} 
 	
-	log.Printf("[DEBUG] Checking if datacenter '%s' and cluster '%s' has been destroyed", datacenter, cluster2)
 	_, err = findTestCluster(datacenter, cluster2)
-	if err == nil {
-		return fmt.Errorf("datacenter '%s' and cluster '%s' was not destroyed as expected", datacenter, cluster2);
-	}		
-	log.Printf("[DEBUG] API response: %s", err.Error())
-	
+	if err != nil {
+		log.Printf("[DEBUG] Cluster '%s' destroyed as expected. API response was: %s", cluster2, err.Error())
+	} else if keepClusters {
+		log.Printf("[DEBUG] Cluster '%s' not destroyed as expected.", cluster2)
+	} else {
+		return fmt.Errorf("datacenter '%s' and cluster '%s' was not destroyed as expected", datacenter, cluster2);		
+	} 
+
 	return nil
 }
 
@@ -165,6 +184,8 @@ const testAccClusterConfig = `
 
 resource "vsphere_datacenter" "dc2" {
 	name = "datacenter2"
+
+#	keep = true
 }
 
 resource "vsphere_cluster" "c1" {
@@ -179,6 +200,8 @@ resource "vsphere_cluster" "c1" {
 		host_monitoring = "disabled"
 		vm_monitoring = "vmMonitoringOnly"
 	}
+
+#	keep = true
 }
 
 resource "vsphere_cluster" "c2" {
@@ -193,5 +216,7 @@ resource "vsphere_cluster" "c2" {
 		host_monitoring = "enabled"
 		vm_monitoring = "vmAndAppMonitoring"
 	}
+
+#	keep = true
 }
 `

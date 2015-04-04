@@ -25,6 +25,10 @@ func resourceVsphereDatacenter() *schema.Resource {
 				Type: schema.TypeString,
 				Required: true,
 			},			
+			"keep": &schema.Schema{
+				Type: schema.TypeBool,
+				Optional: true,
+			},			
 		},
 	}
 }
@@ -86,21 +90,23 @@ func resourceVsphereDatacenterCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceVsphereDatacenterDelete(d *schema.ResourceData, meta interface{}) error {
 
-	datacenter, err := findDatacenter(d, meta)
-	if err != nil {
-		return fmt.Errorf("datacenter to delete '%s' not found", d.Id())
+	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
+		
+		datacenter, err := findDatacenter(d, meta)
+		if err != nil {
+			return fmt.Errorf("datacenter to delete '%s' not found", d.Id())
+		}
+		
+		log.Printf("[DEBUG] Deleting datacenter: %s", d.Id())
+		
+		task, err := datacenter.Destroy(context.Background())
+		if err != nil {
+			return err
+		}
+	  	err = task.Wait(context.Background())
+		if err != nil {
+			return err
+		}
 	}
-	
-	log.Printf("[DEBUG] Deleting datacenter: %s", d.Id())
-	
-	task, err := datacenter.Destroy(context.Background())
-	if err != nil {
-		return err
-	}
-  	err = task.Wait(context.Background())
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
