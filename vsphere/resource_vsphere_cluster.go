@@ -98,6 +98,127 @@ func resourceVsphereCluster() *schema.Resource {
 	}
 }
 
+func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) error {
+	
+	finder, datacenter, err := clusterFinder(d, meta)
+	if err != nil {
+		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
+		d.SetId("")
+		return err
+	}
+	
+	_, err = finder.Cluster(context.Background(), d.Get("name").(string))
+	if err != nil {		
+		log.Printf("[DEBUG] Creating the cluster: %s", d.Get("name").(string))
+		
+		var df *object.DatacenterFolders
+		
+		df, err = datacenter.Folders(context.Background());
+		if err != nil {
+			return err			
+		}
+	
+		_, err = df.HostFolder.CreateCluster(context.Background(), d.Get("name").(string), types.ClusterConfigSpecEx{})
+		if err != nil {
+			log.Printf("[ERROR] VMOMI Error creating cluster: %s", err.Error())
+			d.SetId("")
+			return err
+		}
+	}
+	
+	d.SetId(d.Get("name").(string))
+	return resourceVsphereClusterUpdate(d, meta)
+}
+
+func resourceVsphereClusterRead(d *schema.ResourceData, meta interface{}) error {
+	
+	cluster, err := findCluster(d, meta)
+	if err != nil {		
+		// TODO: reset only if not found. Test for no found in err.Error()
+		d.SetId("")
+		return err
+	}
+	
+	config, err := cluster.Configuration(context.Background())
+	if err != nil {
+		log.Printf("[ERROR] Unable read cluster configuration: '%s'", d.Id())
+		return err
+	}
+	
+	if config.DrsConfig.Enabled {
+		drs := make(map[string]interface{})
+		drs["enable_vm_automation_override"] = strconv.FormatBool(config.DrsConfig.EnableVmBehaviorOverrides)
+		drs["migration_threshold"] = strconv.Itoa(config.DrsConfig.VmotionRate)
+		drs["default_automation_level"] = string(config.DrsConfig.DefaultVmBehavior)		
+		d.Set("drs", append(make([]map[string]interface{}, 0, 1), drs))
+	}
+	if config.DasConfig.Enabled {
+		ha := make(map[string]interface{})	
+		ha["vm_monitoring"] = config.DasConfig.VmMonitoring
+		ha["host_monitoring"] = config.DasConfig.HostMonitoring
+		ha["admissionControlEnabled"] = strconv.FormatBool(config.DasConfig.AdmissionControlEnabled)
+		d.Set("ha", append(make([]map[string]interface{}, 0, 1), ha))
+ 	}
+		
+	return nil
+}
+
+func resourceVsphereClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+	
+	cluster, err := findCluster(d, meta)
+	if err != nil {
+		return err
+	}
+	
+	spec := types.ClusterConfigSpec {}
+	spec.DrsConfig, err = getClusterDrsConfigInfo(d) 
+	if err != nil {
+		return err
+	}
+	spec.DasConfig, err = getClusterDasConfigInfo(d)
+	if err != nil {
+		return err
+	}
+	
+	log.Printf("[DEBUG] Updating cluster: %s", d.Id())
+	
+	var task *object.Task
+	task, err = cluster.ReconfigureCluster(context.Background(), spec)
+	if err != nil {
+		return err
+	}	
+	err = task.Wait(context.Background())
+	if err != nil {
+		return err
+	}
+	
+	return nil
+}
+
+func resourceVsphereClusterDelete(d *schema.ResourceData, meta interface{}) error {
+
+	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
+		
+		cluster, err := findCluster(d, meta)
+		if err != nil {
+			return err
+		}
+		
+		log.Printf("[DEBUG] Deleting cluster: %s", d.Id())
+		
+		task, err := cluster.Destroy(context.Background())
+		if err != nil {
+			return err
+		}
+	  	err = task.Wait(context.Background())
+		if err != nil {
+			return err
+		}
+	}
+	
+	return nil
+}
+
 func clusterFinder(d *schema.ResourceData, meta interface{}) (*find.Finder, *object.Datacenter, error) {
 	
 	client := meta.(*govmomi.Client)
@@ -214,125 +335,4 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 	}
 	
 	return nil, nil
-}
-
-func resourceVsphereClusterRead(d *schema.ResourceData, meta interface{}) error {
-	
-	cluster, err := findCluster(d, meta)
-	if err != nil {		
-		// TODO: reset only if not found. Test for no found in err.Error()
-		d.SetId("")
-		return err
-	}
-	
-	config, err := cluster.Configuration(context.Background())
-	if err != nil {
-		log.Printf("[ERROR] Unable read cluster configuration: '%s'", d.Id())
-		return err
-	}
-	
-	if config.DrsConfig.Enabled {
-		drs := make(map[string]interface{})
-		drs["enable_vm_automation_override"] = strconv.FormatBool(config.DrsConfig.EnableVmBehaviorOverrides)
-		drs["migration_threshold"] = strconv.Itoa(config.DrsConfig.VmotionRate)
-		drs["default_automation_level"] = string(config.DrsConfig.DefaultVmBehavior)		
-		d.Set("drs", append(make([]map[string]interface{}, 0, 1), drs))
-	}
-	if config.DasConfig.Enabled {
-		ha := make(map[string]interface{})	
-		ha["vm_monitoring"] = config.DasConfig.VmMonitoring
-		ha["host_monitoring"] = config.DasConfig.HostMonitoring
-		ha["admissionControlEnabled"] = strconv.FormatBool(config.DasConfig.AdmissionControlEnabled)
-		d.Set("ha", append(make([]map[string]interface{}, 0, 1), ha))
- 	}
-		
-	return nil
-}
-
-func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) error {
-	
-	finder, datacenter, err := clusterFinder(d, meta)
-	if err != nil {
-		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
-		d.SetId("")
-		return err
-	}
-	
-	_, err = finder.Cluster(context.Background(), d.Get("name").(string))
-	if err != nil {		
-		log.Printf("[DEBUG] Creating the cluster: %s", d.Get("name").(string))
-		
-		var df *object.DatacenterFolders
-		
-		df, err = datacenter.Folders(context.Background());
-		if err != nil {
-			return err			
-		}
-	
-		_, err = df.HostFolder.CreateCluster(context.Background(), d.Get("name").(string), types.ClusterConfigSpecEx{})
-		if err != nil {
-			log.Printf("[ERROR] VMOMI Error creating cluster: %s", err.Error())
-			d.SetId("")
-			return err
-		}
-	}
-	
-	d.SetId(d.Get("name").(string))
-	return resourceVsphereClusterUpdate(d, meta)
-}
-
-func resourceVsphereClusterUpdate(d *schema.ResourceData, meta interface{}) error {
-	
-	cluster, err := findCluster(d, meta)
-	if err != nil {
-		return err
-	}
-	
-	spec := types.ClusterConfigSpec {}
-	spec.DrsConfig, err = getClusterDrsConfigInfo(d) 
-	if err != nil {
-		return err
-	}
-	spec.DasConfig, err = getClusterDasConfigInfo(d)
-	if err != nil {
-		return err
-	}
-	
-	log.Printf("[DEBUG] Updating cluster: %s", d.Id())
-	
-	var task *object.Task
-	task, err = cluster.ReconfigureCluster(context.Background(), spec)
-	if err != nil {
-		return err
-	}	
-	err = task.Wait(context.Background())
-	if err != nil {
-		return err
-	}
-	
-	return nil
-}
-
-func resourceVsphereClusterDelete(d *schema.ResourceData, meta interface{}) error {
-
-	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
-		
-		cluster, err := findCluster(d, meta)
-		if err != nil {
-			return err
-		}
-		
-		log.Printf("[DEBUG] Deleting cluster: %s", d.Id())
-		
-		task, err := cluster.Destroy(context.Background())
-		if err != nil {
-			return err
-		}
-	  	err = task.Wait(context.Background())
-		if err != nil {
-			return err
-		}
-	}
-	
-	return nil
 }

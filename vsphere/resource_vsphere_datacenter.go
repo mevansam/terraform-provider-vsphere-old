@@ -33,35 +33,6 @@ func resourceVsphereDatacenter() *schema.Resource {
 	}
 }
 
-func findDatacenter(d *schema.ResourceData, meta interface{}) (*object.Datacenter, error) {
-	
-	client := meta.(*govmomi.Client)
-	if client == nil {
-		return nil, fmt.Errorf("client is nil")
-	}
-	
-	finder := find.NewFinder(client.Client, false)
-	datacenter, err := finder.Datacenter(context.Background(), d.Id())
-	if err != nil {
-		return nil, err
-	}
-	
-	return datacenter, nil
-}
-
-func resourceVsphereDatacenterRead(d *schema.ResourceData, meta interface{}) error {
-		
-	_, err := findDatacenter(d, meta)
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("datacenter '%s' not found", d.Id())
-	}
-	
-	log.Printf("[DEBUG] Found datacenter: %s", d.Id())
-	
-	return nil
-}
-
 func resourceVsphereDatacenterCreate(d *schema.ResourceData, meta interface{}) error {
 	
 	client := meta.(*govmomi.Client)
@@ -88,6 +59,19 @@ func resourceVsphereDatacenterCreate(d *schema.ResourceData, meta interface{}) e
 	return resourceVsphereDatacenterRead(d, meta)
 }
 
+func resourceVsphereDatacenterRead(d *schema.ResourceData, meta interface{}) error {
+		
+	_, err := findDatacenter(d, meta)
+	if err != nil {
+		d.SetId("")
+		return fmt.Errorf("datacenter '%s' not found", d.Id())
+	}
+	
+	log.Printf("[DEBUG] Found datacenter: %s", d.Id())
+	
+	return nil
+}
+
 func resourceVsphereDatacenterDelete(d *schema.ResourceData, meta interface{}) error {
 
 	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
@@ -109,4 +93,20 @@ func resourceVsphereDatacenterDelete(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 	return nil
+}
+
+func findDatacenter(d *schema.ResourceData, meta interface{}) (*object.Datacenter, error) {
+	
+	client := meta.(*govmomi.Client)
+	if client == nil {
+		return nil, fmt.Errorf("client is nil")
+	}
+	
+	finder := find.NewFinder(client.Client, false)
+	datacenter, err := finder.Datacenter(context.Background(), d.Id())
+	if err != nil {
+		return nil, err
+	}
+	
+	return datacenter, nil
 }
