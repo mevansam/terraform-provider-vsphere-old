@@ -3,6 +3,9 @@ package vsphere
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -15,20 +18,25 @@ import (
 
 func TestAccVsphereDatacenter_normal(t *testing.T) {
 	
-	resource.Test( t, 
-		resource.TestCase {
-			PreCheck: func() { testAccPreCheck(t) },
-			Providers: testAccProviders,
-			CheckDestroy: testAccCheckDatacenterDestroy,
-			Steps: []resource.TestStep {
-				resource.TestStep {
-					Config: testAccDatacenterConfig,
-					Check: resource.ComposeTestCheckFunc(
-						testAccCheckDatacenterExists("vsphere_datacenter.dc1"),
-					),
+	_, filename, _, _ := runtime.Caller(0)
+	ut := os.Getenv("UNIT_TEST")
+	if ut == "" || ut == filepath.Base(filename) {
+		
+		resource.Test( t, 
+			resource.TestCase {
+				PreCheck: func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				CheckDestroy: testAccCheckDatacenterDestroy,
+				Steps: []resource.TestStep {
+					resource.TestStep {
+						Config: testAccDatacenterConfig,
+						Check: resource.ComposeTestCheckFunc(
+							testAccCheckDatacenterExists("vsphere_datacenter.dc1"),
+						),
+					},
 				},
-			},
-		} )
+			} )
+	}
 }
 
 func testAccCheckDatacenterExists(resource string) resource.TestCheckFunc {

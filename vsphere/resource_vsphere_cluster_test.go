@@ -3,6 +3,9 @@ package vsphere
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"testing"
 
@@ -18,21 +21,26 @@ import (
 
 func TestAccVsphereCluster_normal(t *testing.T) {
 	
-	resource.Test( t, 
-		resource.TestCase {
-			PreCheck: func() { testAccPreCheck(t) },
-			Providers: testAccProviders,
-			CheckDestroy: testAccCheckClusterDestroy,
-			Steps: []resource.TestStep {
-				resource.TestStep {
-					Config: testAccClusterConfig,
-					Check: resource.ComposeTestCheckFunc(
-						testAccCheckClusterExists("vsphere_cluster.c1"),
-						testAccCheckClusterExists("vsphere_cluster.c2"),
-					),
+	_, filename, _, _ := runtime.Caller(0)
+	ut := os.Getenv("UNIT_TEST")
+	if ut == "" || ut == filepath.Base(filename) {
+		
+		resource.Test( t, 
+			resource.TestCase {
+				PreCheck: func() { testAccPreCheck(t) },
+				Providers: testAccProviders,
+				CheckDestroy: testAccCheckClusterDestroy,
+				Steps: []resource.TestStep {
+					resource.TestStep {
+						Config: testAccClusterConfig,
+						Check: resource.ComposeTestCheckFunc(
+							testAccCheckClusterExists("vsphere_cluster.c1"),
+							testAccCheckClusterExists("vsphere_cluster.c2"),
+						),
+					},
 				},
-			},
-		} )
+			} )
+	}
 }
 
 func findTestCluster(datacenter_name string, cluster_name string) (*object.ClusterComputeResource, error) {
@@ -160,30 +168,30 @@ resource "vsphere_datacenter" "dc2" {
 }
 
 resource "vsphere_cluster" "c1" {
-  name = "cluster1"
-  datacenter_id = "${vsphere_datacenter.dc2.id}"
+	name = "cluster1"
+	datacenter_id = "${vsphere_datacenter.dc2.id}"
   
-  drs {
-    default_automation_level = "manual"
-    migration_threshold = 2
-  }
-  ha {
-    host_monitoring = "disabled"
-    vm_monitoring = "vmMonitoringOnly"
-  }
+	drs {
+		default_automation_level = "manual"
+		migration_threshold = 2
+	}
+	ha {
+		host_monitoring = "disabled"
+		vm_monitoring = "vmMonitoringOnly"
+	}
 }
 
 resource "vsphere_cluster" "c2" {
-  name = "cluster2"
-  datacenter_id = "${vsphere_datacenter.dc2.id}"
+	name = "cluster2"
+	datacenter_id = "${vsphere_datacenter.dc2.id}"
 
-  drs {
-    default_automation_level = "partiallyAutomated"
-    migration_threshold = 4
-  }
-  ha {
-    host_monitoring = "enabled"
-    vm_monitoring = "vmAndAppMonitoring"
-  }
+	drs {
+		default_automation_level = "partiallyAutomated"
+		migration_threshold = 4
+	}
+	ha {
+		host_monitoring = "enabled"
+		vm_monitoring = "vmAndAppMonitoring"
+	}
 }
 `
