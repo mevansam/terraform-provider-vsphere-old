@@ -8,8 +8,6 @@ import (
 	"golang.org/x/net/context"
 	
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 )
@@ -100,7 +98,7 @@ func resourceVsphereCluster() *schema.Resource {
 
 func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	
-	finder, datacenter, err := clusterFinder(d, meta)
+	finder, datacenter, err := GetFinder(d, meta)
 	if err != nil {
 		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
 		d.SetId("")
@@ -219,26 +217,9 @@ func resourceVsphereClusterDelete(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-func clusterFinder(d *schema.ResourceData, meta interface{}) (*find.Finder, *object.Datacenter, error) {
-	
-	client := meta.(*govmomi.Client)
-	if client == nil {
-		return nil, nil, fmt.Errorf("client is nil")
-	}
-	
-	finder := find.NewFinder(client.Client, false)
-	datacenter, err := finder.Datacenter(context.Background(), d.Get("datacenter_id").(string))
-	if err != nil {
-		return nil, nil, err
-	}
-	finder.SetDatacenter(datacenter)
-	
-	return finder, datacenter, nil
-}
-
 func findCluster(d *schema.ResourceData, meta interface{}) (*object.ClusterComputeResource, error) {
 	
-	finder, _, err := clusterFinder(d, meta)
+	finder, _, err := GetFinder(d, meta)
 	if err != nil {
 		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
 		return nil, err
