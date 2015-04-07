@@ -98,7 +98,7 @@ func resourceVsphereCluster() *schema.Resource {
 
 func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	
-	finder, datacenter, err := GetFinder(d, meta)
+	finder, datacenter, err := getFinder(d, meta)
 	if err != nil {
 		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
 		d.SetId("")
@@ -219,7 +219,7 @@ func resourceVsphereClusterDelete(d *schema.ResourceData, meta interface{}) erro
 
 func findCluster(d *schema.ResourceData, meta interface{}) (*object.ClusterComputeResource, error) {
 	
-	finder, _, err := GetFinder(d, meta)
+	finder, _, err := getFinder(d, meta)
 	if err != nil {
 		log.Printf("[ERROR] Unable to create finder for operations on cluster: '%s'", d.Get("name").(string))
 		return nil, err
@@ -246,10 +246,10 @@ func getClusterDrsConfigInfo(d *schema.ResourceData) (*types.ClusterDrsConfigInf
 		drsConfig.Enabled = true
 		
 		if v, ok := d.GetOk("drs.0.enable_vm_automation_override"); ok {
-			drsConfig.EnableVmBehaviorOverrides, _ = v.(bool)
+			drsConfig.EnableVmBehaviorOverrides = v.(bool)
 		}
 		if v, ok := d.GetOk("drs.0.migration_threshold"); ok {
-			drsConfig.VmotionRate, _ = v.(int)
+			drsConfig.VmotionRate = v.(int)
 		}
 		if v, ok := d.GetOk("drs.0.default_automation_level"); ok {
 			defaultVmBehavior := types.DrsBehavior(v.(string))
@@ -295,7 +295,7 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 			dasConfig.HostMonitoring = hostMonitoring
 		}
 		if v, ok := d.GetOk("ha.0.admissionControlEnabled"); ok {
-			dasConfig.AdmissionControlEnabled, _ = v.(bool)
+			dasConfig.AdmissionControlEnabled = v.(bool)
 		}
 		if d.Get("ha.0.admissionControlPolicy.#").(int) > 0 {
 			var props []types.DynamicProperty
