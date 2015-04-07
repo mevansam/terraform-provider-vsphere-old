@@ -54,7 +54,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	return config.Client()
 }
 
-func GetFinder(d *schema.ResourceData, meta interface{}) (*find.Finder, *object.Datacenter, error) {
+func getFinder(d *schema.ResourceData, meta interface{}) (*find.Finder, *object.Datacenter, error) {
 	
 	client := meta.(*govmomi.Client)
 	if client == nil {
@@ -79,49 +79,4 @@ func GetFinder(d *schema.ResourceData, meta interface{}) (*find.Finder, *object.
 	finder.SetDatacenter(datacenter)
 	
 	return finder, datacenter, nil
-}
-
-func FindHost(d *schema.ResourceData, meta interface{}) (*object.HostSystem, error) {
-	
-	finder, _, err := GetFinder(d, meta)
-	if err != nil {
-		return nil, err
-	}
-	
-	hostSystem, err := finder.HostSystem(context.Background(), d.Get("host_id").(string))
-	if err != nil {
-		return nil, err
-	}
-	
-	return hostSystem, nil
-}
-
-func FindCluster(d *schema.ResourceData, meta interface{}) (*object.ClusterComputeResource, error) {
-	
-	finder, _, err := GetFinder(d, meta)
-	if err != nil {
-		return nil, err
-	}
-	
-	cluster, err := finder.Cluster(context.Background(), d.Get("cluster_id").(string))
-	if err != nil {
-		return nil, err
-	}
-	
-	return cluster, nil
-}
-
-func FindResourcePool(d *schema.ResourceData, meta interface{}) (*object.ResourcePool, error) {
-	
-	finder, _, err := GetFinder(d, meta)
-	if err != nil {
-		return nil, err
-	}
-	
-	resourcePool, err := finder.ResourcePool(context.Background(), d.Get("resource_pool_id").(string))
-	if err != nil {
-		return nil, err
-	}
-	
-	return resourcePool, nil
 }
