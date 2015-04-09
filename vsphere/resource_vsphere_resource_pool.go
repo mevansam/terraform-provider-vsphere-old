@@ -198,7 +198,7 @@ func resourceVsphereResourcePoolUpdate(d *schema.ResourceData, meta interface{})
 
 func resourceVsphereResourcePoolDelete(d *schema.ResourceData, meta interface{}) error {
 
-	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {		
+	if keep, ok := d.GetOk("keep"); !ok || !keep.(bool) {
 
 		resourcePool, err := findResourcePool(d, meta)
 		if err != nil {

@@ -151,7 +151,7 @@ func findTestResourcePool(resourcePoolName, parentName string, datacenterName st
 		return nil, err
 	}
 	
-	return resourcePool, err
+	return resourcePool, nil
 }
 
 func verifyResourceAllocation(allocType string, allocInfo types.ResourceAllocationInfo, instance *terraform.InstanceState) error {
@@ -196,7 +196,7 @@ const testAccResourcePoolConfig = `
 resource "vsphere_datacenter" "dc3" {
 	name = "datacenter3"
 
-	keep = true
+#	keep = true
 }
 
 resource "vsphere_cluster" "c3" {
@@ -206,7 +206,7 @@ resource "vsphere_cluster" "c3" {
 	drs {}
 	ha {}
 
-	keep = true
+#	keep = true
 }
 
 resource "vsphere_resource_pool" "rp1" {
@@ -228,6 +228,6 @@ resource "vsphere_resource_pool" "rp1" {
 		limit = 8192
 	}
 	
-	keep = false
+#	keep = false
 }
 `

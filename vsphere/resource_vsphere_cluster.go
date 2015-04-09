@@ -27,7 +27,6 @@ func resourceVsphereCluster() *schema.Resource {
 				Type: schema.TypeString,
 				Required: true,
 			},
-			
 			"datacenter_id": &schema.Schema{
 				Type: schema.TypeString,
 				Required: true,
