@@ -57,11 +57,11 @@ func TestAccVsphereResourcePool_normal(t *testing.T) {
 							resource.TestCheckResourceAttr(
 								"vsphere_resource_pool.rp1", "memory.0.shares", "40960"),
 							resource.TestCheckResourceAttr(
-								"vsphere_resource_pool.rp1", "memory.0.reservation", "4096"),
+								"vsphere_resource_pool.rp1", "memory.0.reservation", "2048"),
 							resource.TestCheckResourceAttr(
 								"vsphere_resource_pool.rp1", "memory.0.expandable_reservation", "true"),
 							resource.TestCheckResourceAttr(
-								"vsphere_resource_pool.rp1", "memory.0.limit", "8192"),
+								"vsphere_resource_pool.rp1", "memory.0.limit", "3072"),
 						),
 					},
 				},
@@ -209,7 +209,6 @@ resource "vsphere_cluster" "c3" {
 	datacenter_id = "${vsphere_datacenter.dc3.id}"
   
 	drs {}
-	ha {}
 
 	keep = true
 }
@@ -228,6 +227,8 @@ resource "vsphere_host" "h3" {
 }
 
 resource "vsphere_resource_pool" "rp1" {
+	depends_on = ["vsphere_host.h3"]
+
 	name = "resource_pool1"
 	datacenter_id = "${vsphere_datacenter.dc3.id}"
 	parent_id = "${vsphere_cluster.c3.id}"
@@ -241,9 +242,9 @@ resource "vsphere_resource_pool" "rp1" {
 	
 	memory {
 		shares = "40960"
-		reservation = 4096
+		reservation = 2048
 		expandable_reservation = true
-		limit = 8192
+		limit = 3072
 	}
 	
 #	keep = false
