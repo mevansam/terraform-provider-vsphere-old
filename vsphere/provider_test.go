@@ -17,6 +17,15 @@ import (
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
 
+type EsxHost struct {
+	IP string
+	User string
+	Password string
+	License string
+}
+
+var testEsxHost EsxHost
+
 func init() {
 	testAccProvider = Provider().(*schema.Provider)
 	testAccProviders = map[string]terraform.ResourceProvider{
@@ -38,8 +47,14 @@ func testAccPreCheck(t *testing.T) {
 	host := os.Getenv("VSPHERE_HOST")
 	username := os.Getenv("VSPHERE_USERNAME")
 	password := os.Getenv("VSPHERE_PASSWORD")
-	if username == "" || password == "" || host == "" {
-		t.Fatal("VSPHERE_USERNAME, VSPHERE_PASSWORD and VSPHERE_HOST must be set for acceptance tests to work.")
+	
+	testEsxHost.IP = os.Getenv("ESX_HOST")
+	testEsxHost.User = os.Getenv("ESX_USER")
+	testEsxHost.Password = os.Getenv("ESX_PASSWORD")
+	testEsxHost.License = os.Getenv("ESX_LICENSE")	
+	
+	if username == "" || password == "" || host == "" || testEsxHost.IP == "" || testEsxHost.User == "" || testEsxHost.Password =="" {
+		t.Fatal("VSPHERE_USERNAME, VSPHERE_PASSWORD, VSPHERE_HOST, ESX_HOST, ESX_USER and ESX_LICENSE must be set for acceptance tests to work.")
 	}
 }
 
