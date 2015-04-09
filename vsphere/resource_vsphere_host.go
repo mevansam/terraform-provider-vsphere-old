@@ -270,7 +270,7 @@ func findHost(d *schema.ResourceData, meta interface{}) (*object.HostSystem, err
 		clusterName = nil
 	}
 
-	hostSystem, err :=  getHost(d.Id(), d.Get("datacenter_id").(string), clusterName, finder)
+	hostSystem, err :=  getHost(d.Get("host").(string), d.Get("datacenter_id").(string), clusterName, finder)
 	if err != nil {
 		return nil, err
 	}
