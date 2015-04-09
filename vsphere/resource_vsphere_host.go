@@ -58,6 +58,10 @@ func resourceVsphereHost() *schema.Resource {
 				Type: schema.TypeBool,
 				Optional: true,
 			},
+			"object_id": &schema.Schema{
+				Type: schema.TypeString,
+				Computed: true,
+			},			
 		},
 	}
 }
@@ -170,6 +174,7 @@ func resourceVsphereHostCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 	
+	d.SetId(d.Get("host").(string))
 	return resourceVsphereHostRead(d, meta)
 }
 
@@ -181,7 +186,7 @@ func resourceVsphereHostRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}	
 
-	d.SetId(hostSystem.Reference().Value);
+	d.Set("object_id", hostSystem.Reference().Value) 
 	return nil
 }
 
@@ -220,7 +225,7 @@ func resourceVsphereHostDelete(d *schema.ResourceData, meta interface{}) error {
 						if err != nil {
 							return err
 						}
-						if len(hosts) > 0 && hosts[0].Value == d.Id() {
+						if len(hosts) > 0 && hosts[0].Value == d.Get("object_id").(string) {
 							break
 						}
 				}
@@ -253,7 +258,7 @@ func findHost(d *schema.ResourceData, meta interface{}) (*object.HostSystem, err
 	
 	finder, _, err := getFinder(d, meta)
 	if err != nil {
-		log.Printf("[ERROR] Unable to create finder for operations on host: '%s'", d.Get("host").(string))
+		log.Printf("[ERROR] Unable to create finder for operations on host: '%s'", d.Id())
 		return nil, err
 	}
 	
@@ -265,7 +270,7 @@ func findHost(d *schema.ResourceData, meta interface{}) (*object.HostSystem, err
 		clusterName = nil
 	}
 
-	hostSystem, err :=  getHost(d.Get("host").(string), d.Get("datacenter_id").(string), clusterName, finder)
+	hostSystem, err :=  getHost(d.Id(), d.Get("datacenter_id").(string), clusterName, finder)
 	if err != nil {
 		return nil, err
 	}

@@ -90,6 +90,10 @@ func resourceVsphereResourcePool() *schema.Resource {
 				Type: schema.TypeBool,
 				Optional: true,
 			},			
+			"object_id": &schema.Schema{
+				Type: schema.TypeString,
+				Computed: true,
+			},			
 		},
 	}
 }
@@ -98,7 +102,7 @@ func resourceVsphereResourcePoolCreate(d *schema.ResourceData, meta interface{})
 
 	var err error
 
-	_, err = findResourcePool(d, meta)
+	resourcePool, err := findResourcePool(d, meta)
 	if err != nil {
 		
 		if err.Error() == fmt.Sprintf("resource pool %s was not found", d.Get("name").(string)) {
@@ -128,7 +132,7 @@ func resourceVsphereResourcePoolCreate(d *schema.ResourceData, meta interface{})
 				return err
 			}
 			
-			_, err = parentResourcePool.Create(context.Background(), d.Get("name").(string), spec)
+			resourcePool, err = parentResourcePool.Create(context.Background(), d.Get("name").(string), spec)
 			if err != nil {
 				log.Printf("[ERROR] Unable to create resource pool '%s'", d.Get("name").(string))
 				return err				
@@ -140,6 +144,7 @@ func resourceVsphereResourcePoolCreate(d *schema.ResourceData, meta interface{})
 	}
 	
 	d.SetId(d.Get("name").(string))
+	d.Set("object_id", resourcePool.Reference().Value)
 	return nil
 }
 
@@ -164,6 +169,7 @@ func resourceVsphereResourcePoolRead(d *schema.ResourceData, meta interface{}) e
 	putAllocationInfo("cpu", &mrp.Config.CpuAllocation, d)
 	putAllocationInfo("memory", &mrp.Config.CpuAllocation, d)
 	
+	d.Set("object_id", resourcePool.Reference().Value)
 	return nil
 }
 

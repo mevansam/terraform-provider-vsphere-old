@@ -54,7 +54,7 @@ func testAccPreCheck(t *testing.T) {
 	testEsxHost.License = os.Getenv("ESX_LICENSE")	
 	
 	if username == "" || password == "" || host == "" || testEsxHost.IP == "" || testEsxHost.User == "" || testEsxHost.Password =="" {
-		t.Fatal("VSPHERE_USERNAME, VSPHERE_PASSWORD, VSPHERE_HOST, ESX_HOST, ESX_USER and ESX_LICENSE must be set for acceptance tests to work.")
+		t.Fatal("VSPHERE_USERNAME, VSPHERE_PASSWORD, VSPHERE_HOST, ESX_HOST, and ESX_USER and ESX_PASSWORD must be set for acceptance tests to work.")
 	}
 }
 

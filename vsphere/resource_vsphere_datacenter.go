@@ -29,6 +29,10 @@ func resourceVsphereDatacenter() *schema.Resource {
 				Type: schema.TypeBool,
 				Optional: true,
 			},			
+			"object_id": &schema.Schema{
+				Type: schema.TypeString,
+				Computed: true,
+			},			
 		},
 	}
 }
@@ -61,14 +65,13 @@ func resourceVsphereDatacenterCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceVsphereDatacenterRead(d *schema.ResourceData, meta interface{}) error {
 		
-	_, err := findDatacenter(d, meta)
+	datacenter, err := findDatacenter(d, meta)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("datacenter '%s' not found", d.Id())
 	}
 	
-	log.Printf("[DEBUG] Found datacenter: %s", d.Id())
-	
+	d.Set("object_id", datacenter.Reference().Value)
 	return nil
 }
 

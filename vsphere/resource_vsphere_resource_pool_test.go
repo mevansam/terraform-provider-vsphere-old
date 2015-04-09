@@ -36,7 +36,12 @@ func TestAccVsphereResourcePool_normal(t *testing.T) {
 				CheckDestroy: testAccCheckResourcePoolDestroy,
 				Steps: []resource.TestStep {
 					resource.TestStep {
-						Config: testAccResourcePoolConfig,
+						Config: fmt.Sprintf( testAccResourcePoolConfig, 
+							testEsxHost.IP,
+							testEsxHost.User,
+							testEsxHost.Password,
+							testEsxHost.License,
+						),
 						Check: resource.ComposeTestCheckFunc(
 							testAccCheckResourcePoolExists("vsphere_resource_pool.rp1"),
 							resource.TestCheckResourceAttr("vsphere_resource_pool.rp1", "name", "resource_pool1"),
@@ -196,7 +201,7 @@ const testAccResourcePoolConfig = `
 resource "vsphere_datacenter" "dc3" {
 	name = "datacenter3"
 
-#	keep = true
+	keep = true
 }
 
 resource "vsphere_cluster" "c3" {
@@ -206,7 +211,20 @@ resource "vsphere_cluster" "c3" {
 	drs {}
 	ha {}
 
-#	keep = true
+	keep = true
+}
+
+resource "vsphere_host" "h3" {
+	host = "%s"
+	datacenter_id = "${vsphere_datacenter.dc3.id}"
+	cluster_id = "${vsphere_cluster.c3.id}"
+	
+	user = "%s"
+	password = "%s"
+	license = "%s"
+	
+	ssl_no_verify = true
+	keep = true
 }
 
 resource "vsphere_resource_pool" "rp1" {

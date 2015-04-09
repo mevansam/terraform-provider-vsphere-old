@@ -97,25 +97,28 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 		log.Printf("[DEBUG] Cluster config from read via VMOMI: %# v", pretty.Formatter(config))
 		
 		if v, _ := strconv.Atoi(attributes["drs.#"]); !config.DrsConfig.Enabled || v != 1 {
-			fmt.Errorf("dynamic resource scheduler enabled but not reflected in terraform state")
+			return fmt.Errorf("dynamic resource scheduler enabled but not reflected in terraform state")
 		}
 		if string(config.DrsConfig.DefaultVmBehavior) != attributes["drs.0.default_automation_level"] {
-			fmt.Errorf("high-availability vm monitoring attribute mis-match")
+			return fmt.Errorf("high-availability vm monitoring attribute mis-match")
 		}
 		if strconv.Itoa(config.DrsConfig.VmotionRate) != attributes["drs.0.migration_threshold"] {
-			fmt.Errorf("high-availability vm monitoring attribute mis-match")
+			return fmt.Errorf("high-availability vm monitoring attribute mis-match")
 		}
 		if v, _ := strconv.Atoi(attributes["ha.#"]); !config.DasConfig.Enabled || v != 1 {
-			fmt.Errorf("high-availability enabled but not reflected in terraform state")
+			return fmt.Errorf("high-availability enabled but not reflected in terraform state")
 		}
 		if config.DasConfig.VmMonitoring != attributes["ha.0.vm_monitoring"] {
-			fmt.Errorf("high-availability vm monitoring attribute mis-match")
+			return fmt.Errorf("high-availability vm monitoring attribute mis-match")
 		}
 		if config.DasConfig.HostMonitoring != attributes["ha.0.host_monitoring"] {
-			fmt.Errorf("high-availability host monitoring attribute mis-match")
+			return fmt.Errorf("high-availability host monitoring attribute mis-match")
 		}
 		if strconv.FormatBool(config.DasConfig.AdmissionControlEnabled) != attributes["ha.0.admissionControlEnabled"] {
-			fmt.Errorf("high-availability adminission control attribute mis-match")
+			return fmt.Errorf("high-availability adminission control attribute mis-match")
+		}
+		if cluster.Reference().Value != attributes["object_id"] {
+			return fmt.Errorf("cluster object id mismatch. expected '%s' but go '%s'", cluster.Reference().Value, attributes["object_id"])
 		}
 		
 		keepClusters = (attributes["keep"] == "true")

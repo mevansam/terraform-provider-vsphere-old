@@ -38,16 +38,16 @@ func TestAccVsphereStandaloneHost_normal(t *testing.T) {
 								testEsxHost.License,
 							),
 							Check: resource.ComposeTestCheckFunc(
-								testAccCheckHostExists("vsphere_host.h1"),
+								testAccCheckHostExists("vsphere_host.h4"),
 								
 								resource.TestCheckResourceAttr(
-									"vsphere_host.h1", "host", testEsxHost.IP),
+									"vsphere_host.h4", "host", testEsxHost.IP),
 								resource.TestCheckResourceAttr(
-									"vsphere_host.h1", "user", testEsxHost.User),
+									"vsphere_host.h4", "user", testEsxHost.User),
 								resource.TestCheckResourceAttr(
-									"vsphere_host.h1", "password", testEsxHost.Password),
+									"vsphere_host.h4", "password", testEsxHost.Password),
 								resource.TestCheckResourceAttr(
-									"vsphere_host.h1", "license", testEsxHost.License),
+									"vsphere_host.h4", "license", testEsxHost.License),
 							),
 						},
 					},
@@ -77,7 +77,7 @@ func TestAccVsphereClusteredHost_normal(t *testing.T) {
 								testEsxHost.License,
 							),
 							Check: resource.ComposeTestCheckFunc(
-								testAccCheckHostExists("vsphere_host.h1"),
+								testAccCheckHostExists("vsphere_host.h4"),
 							),
 						},
 					},
@@ -110,8 +110,8 @@ func testAccCheckHostExists(resource string) resource.TestCheckFunc {
 			return err
 		}
 		
-		if hostSystem.Reference().Value != hostId {
-			return fmt.Errorf("host id mismatch. expected '%s' but go '%s'", hostId, hostSystem.Reference().Value)
+		if hostSystem.Reference().Value != attributes["object_id"] {
+			return fmt.Errorf("host object id mismatch. expected '%s' but go '%s'", hostSystem.Reference().Value, attributes["object_id"])
 		}
 		
 		log.Printf("[DEBUG] Found host '%s' with id '%s' at path '%s'", hostName, hostId, hostSystem.InventoryPath)
@@ -123,12 +123,12 @@ func testAccCheckHostExists(resource string) resource.TestCheckFunc {
 
 func testAccCheckStandaloneHostDestroy(s *terraform.State) error {
 
-	const h1 = "vsphere_host.h1"
+	const h4 = "vsphere_host.h4"
 	const datacenter4 = "datacenter4"
 
-	_, ok := s.RootModule().Resources[h1]
+	_, ok := s.RootModule().Resources[h4]
 	if ok {
-		return fmt.Errorf("host '%s' still exists in the terraform state", h1)
+		return fmt.Errorf("host '%s' still exists in the terraform state", h4)
 	}
 
 	err := testCheckHostDestroy(testEsxHost.IP, datacenter4, "")
@@ -185,7 +185,7 @@ resource "vsphere_datacenter" "dc4" {
 #	keep = true
 }
 
-resource "vsphere_host" "h1" {
+resource "vsphere_host" "h4" {
 	host = "%s"
 	datacenter_id = "${vsphere_datacenter.dc4.id}"
 	
@@ -216,7 +216,7 @@ resource "vsphere_cluster" "c4" {
 #	keep = true
 }
 
-resource "vsphere_host" "h1" {
+resource "vsphere_host" "h4" {
 	host = "%s"
 	datacenter_id = "${vsphere_datacenter.dc4.id}"
 	cluster_id = "${vsphere_cluster.c4.id}"

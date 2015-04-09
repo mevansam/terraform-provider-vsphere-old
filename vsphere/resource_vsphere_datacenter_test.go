@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/kr/pretty"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 )
@@ -53,18 +54,24 @@ func testAccCheckDatacenterExists(resource string) resource.TestCheckFunc {
 			return fmt.Errorf("datacenter '%s' not found in terraform state", resource)
 		}
 		
+		log.Printf("[DEBUG] Terraform host: %# v", pretty.Formatter(rs))
+		
+		attributes := rs.Primary.Attributes
 		name := rs.Primary.ID
-		log.Printf("[DEBUG] Checking if datacenter '%s' exists", name)
-
+		
 		client := testAccProvider.Meta().(*govmomi.Client)
 		if client == nil {
 			fmt.Errorf("client is nil")
 		}
 		
 		finder := find.NewFinder(client.Client, false)
-		_, err := finder.Datacenter(context.Background(), name)
+		datacenter, err := finder.Datacenter(context.Background(), name)
 		if err != nil {
 			return err
+		}
+		
+		if datacenter.Reference().Value != attributes["object_id"] {
+			return fmt.Errorf("datacenter object id mismatch. expected '%s' but go '%s'", datacenter.Reference().Value, attributes["object_id"])
 		}
 		
 		keepDatacenter = (rs.Primary.Attributes["keep"] == "true")

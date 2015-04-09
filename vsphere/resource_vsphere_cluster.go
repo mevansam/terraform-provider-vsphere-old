@@ -39,14 +39,17 @@ func resourceVsphereCluster() *schema.Resource {
 						"enable_vm_automation_override": &schema.Schema{
 							Type: schema.TypeBool,
 							Optional: true,
+							Default: true,
 						},
 						"default_automation_level": &schema.Schema{
 							Type: schema.TypeString, // One of manual, partiallyAutomated or fullyAutomated
 							Optional: true,
+							Default: "fullyAutomated",
 						},
 						"migration_threshold": &schema.Schema{
 							Type: schema.TypeInt,
 							Optional: true,
+							Default: 3,
 						},
 					},
 				},
@@ -59,14 +62,17 @@ func resourceVsphereCluster() *schema.Resource {
 						"host_monitoring": &schema.Schema{
 							Type: schema.TypeString, // One of 'enabled' or 'disabled'
 							Optional: true,
+							Default: "enabled",
 						},
 						"vm_monitoring": &schema.Schema{
 							Type: schema.TypeString, // One of vmAndAppMonitoring, vmMonitoringOnly or vmMonitoringDisabled 
 							Optional: true,
+							Default: "vmMonitoringDisabled",
 						},
 						"admissionControlEnabled": &schema.Schema{
 							Type: schema.TypeBool,
 							Optional: true,
+							Default: true,
 						},
 						"admissionControlPolicy": &schema.Schema{
 							Type:     schema.TypeList,
@@ -91,6 +97,10 @@ func resourceVsphereCluster() *schema.Resource {
 				Type: schema.TypeBool,
 				Optional: true,
 			},			
+			"object_id": &schema.Schema{
+				Type: schema.TypeString,
+				Computed: true,
+			},			
 		},
 	}
 }
@@ -104,7 +114,7 @@ func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	
-	_, err = finder.Cluster(context.Background(), d.Get("name").(string))
+	cluster, err := finder.Cluster(context.Background(), d.Get("name").(string))
 	if err != nil {		
 		log.Printf("[DEBUG] Creating the cluster: %s", d.Get("name").(string))
 		
@@ -115,7 +125,7 @@ func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) erro
 			return err			
 		}
 	
-		_, err = df.HostFolder.CreateCluster(context.Background(), d.Get("name").(string), types.ClusterConfigSpecEx{})
+		cluster, err = df.HostFolder.CreateCluster(context.Background(), d.Get("name").(string), types.ClusterConfigSpecEx{})
 		if err != nil {
 			log.Printf("[ERROR] VMOMI Error creating cluster: %s", err.Error())
 			d.SetId("")
@@ -124,6 +134,7 @@ func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 	
 	d.SetId(d.Get("name").(string))
+	d.Set("object_id", cluster.Reference().Value)
 	return resourceVsphereClusterUpdate(d, meta)
 }
 
@@ -157,6 +168,7 @@ func resourceVsphereClusterRead(d *schema.ResourceData, meta interface{}) error 
 		d.Set("ha", append(make([]map[string]interface{}, 0, 1), ha))
  	}
 		
+	d.Set("object_id", cluster.Reference().Value) 
 	return nil
 }
 
