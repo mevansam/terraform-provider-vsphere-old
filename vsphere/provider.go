@@ -36,6 +36,7 @@ func Provider() terraform.ResourceProvider {
 			"vsphere_datacenter": resourceVsphereDatacenter(),
 			"vsphere_cluster": resourceVsphereCluster(),
 			"vsphere_resource_pool": resourceVsphereResourcePool(),
+			"vsphere_host": resourceVsphereHost(),
 			"vsphere_folder": resourceVsphereFolder(),
 			"vsphere_datastore": resourceVsphereDatastore(),
 			"vsphere_vm": resourceVsphereVM(),
