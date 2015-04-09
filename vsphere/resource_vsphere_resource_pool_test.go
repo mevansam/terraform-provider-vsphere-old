@@ -201,7 +201,7 @@ const testAccResourcePoolConfig = `
 resource "vsphere_datacenter" "dc3" {
 	name = "datacenter3"
 
-	keep = true
+#	keep = true
 }
 
 resource "vsphere_cluster" "c3" {
@@ -210,7 +210,7 @@ resource "vsphere_cluster" "c3" {
   
 	drs {}
 
-	keep = true
+#	keep = true
 }
 
 resource "vsphere_host" "h3" {
@@ -223,7 +223,7 @@ resource "vsphere_host" "h3" {
 	license = "%s"
 	
 	ssl_no_verify = true
-	keep = true
+#	keep = true
 }
 
 resource "vsphere_resource_pool" "rp1" {
