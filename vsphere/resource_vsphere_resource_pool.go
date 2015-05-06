@@ -13,6 +13,7 @@ import (
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
+	"github.com/kr/pretty"
 )
 
 func resourceVsphereResourcePool() *schema.Resource {
@@ -78,6 +79,7 @@ func resourceVsphereResourcePool() *schema.Resource {
 						"expandable_reservation": &schema.Schema{
 							Type: schema.TypeBool,
 							Optional: true,
+							Default: true,
 						},
 						"limit": &schema.Schema{
 							Type: schema.TypeInt,
@@ -276,7 +278,10 @@ func getAllocationInfo(allocType string, allocInfo *types.ResourceAllocationInfo
 			return fmt.Errorf("only 1 %s allocation section permitted", allocType)
 		}
 		if count == 1 {
-					
+
+			expandableReservation := d.Get(fmt.Sprintf("%s.0.expandable_reservation", allocType)).(bool)
+			allocInfo.ExpandableReservation = &expandableReservation
+			
 			if v, ok := d.GetOk(fmt.Sprintf("%s.0.shares", allocType)); ok {
 				shares := types.SharesInfo{}
 				level := types.SharesLevel(v.(string))
@@ -301,14 +306,13 @@ func getAllocationInfo(allocType string, allocInfo *types.ResourceAllocationInfo
 			if v, ok := d.GetOk(fmt.Sprintf("%s.0.reservation", allocType)); ok {
 				allocInfo.Reservation = int64(v.(int))
 			}
-			if v, ok := d.GetOk(fmt.Sprintf("%s.0.expandable_reservation", allocType)); ok {
-				allocInfo.ExpandableReservation = v.(bool)
-			}
 			if v, ok := d.GetOk(fmt.Sprintf("%s.0.limit", allocType)); ok {
 				allocInfo.Limit = int64(v.(int))
 			}
 		}
 	}
+
+	log.Printf("[DEBUG] ResourceAllocationInfo: %# v", pretty.Formatter(allocInfo))
 	return nil
 }
 
@@ -322,7 +326,7 @@ func putAllocationInfo(allocType string, allocInfo *types.ResourceAllocationInfo
 	if allocInfo.Limit != 0 {
 		configState["limit"] = strconv.FormatInt(allocInfo.Limit, 10)
 	}
-	configState["expandable_reservation"] = strconv.FormatBool(allocInfo.ExpandableReservation)
+	configState["expandable_reservation"] = strconv.FormatBool(*allocInfo.ExpandableReservation)
 	
 	if allocInfo.Shares.Level == types.SharesLevelCustom {
 		configState["shares"] = strconv.Itoa(allocInfo.Shares.Shares)

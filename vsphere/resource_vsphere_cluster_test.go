@@ -87,7 +87,7 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}		
-		config, err := cluster.Configuration(context.Background())
+		config, err := getConfiguration(context.Background(), cluster)
 		if err != nil {
 			log.Printf("[ERROR] Unable read configuration for cluster '%s'.", clusterName)
 			return err
@@ -96,7 +96,7 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 		log.Printf("[DEBUG] Cluster state: %# v", pretty.Formatter(rs.Primary))
 		log.Printf("[DEBUG] Cluster config from read via VMOMI: %# v", pretty.Formatter(config))
 		
-		if v, _ := strconv.Atoi(attributes["drs.#"]); !config.DrsConfig.Enabled || v != 1 {
+		if v, _ := strconv.Atoi(attributes["drs.#"]); !*config.DrsConfig.Enabled || v != 1 {
 			return fmt.Errorf("dynamic resource scheduler enabled but not reflected in terraform state")
 		}
 		if string(config.DrsConfig.DefaultVmBehavior) != attributes["drs.0.default_automation_level"] {
@@ -105,7 +105,7 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 		if strconv.Itoa(config.DrsConfig.VmotionRate) != attributes["drs.0.migration_threshold"] {
 			return fmt.Errorf("high-availability vm monitoring attribute mis-match")
 		}
-		if v, _ := strconv.Atoi(attributes["ha.#"]); !config.DasConfig.Enabled || v != 1 {
+		if v, _ := strconv.Atoi(attributes["ha.#"]); !*config.DasConfig.Enabled || v != 1 {
 			return fmt.Errorf("high-availability enabled but not reflected in terraform state")
 		}
 		if config.DasConfig.VmMonitoring != attributes["ha.0.vm_monitoring"] {
@@ -114,7 +114,7 @@ func testAccCheckClusterExists(resource string) resource.TestCheckFunc {
 		if config.DasConfig.HostMonitoring != attributes["ha.0.host_monitoring"] {
 			return fmt.Errorf("high-availability host monitoring attribute mis-match")
 		}
-		if strconv.FormatBool(config.DasConfig.AdmissionControlEnabled) != attributes["ha.0.admissionControlEnabled"] {
+		if strconv.FormatBool(*config.DasConfig.AdmissionControlEnabled) != attributes["ha.0.admissionControlEnabled"] {
 			return fmt.Errorf("high-availability adminission control attribute mis-match")
 		}
 		if cluster.Reference().Value != attributes["object_id"] {
@@ -176,7 +176,7 @@ func findTestCluster(datacenterName string, clusterName string) (*object.Cluster
 		return nil, err
 	}
 	
-	cluster, err := finder.Cluster(context.Background(), clusterName)
+	cluster, err := finder.ClusterComputeResource(context.Background(), clusterName)
 	if err != nil {
 		log.Printf("[ERROR] Unable find cluster: '%s'", clusterName)
 		return nil, err

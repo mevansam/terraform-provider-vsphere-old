@@ -175,7 +175,7 @@ func verifyResourceAllocation(allocType string, allocInfo types.ResourceAllocati
 		if strconv.FormatInt(allocInfo.Reservation, 10) != attributes[fmt.Sprintf("%s.0.reservation", allocType)] {
 			fmt.Errorf("resource allocation %s reservation value mis-match", allocType)
 		}
-		if strconv.FormatBool(allocInfo.ExpandableReservation) != attributes[fmt.Sprintf("%s.0.expandable_reservation", allocType)] {
+		if strconv.FormatBool(*allocInfo.ExpandableReservation) != attributes[fmt.Sprintf("%s.0.expandable_reservation", allocType)] {
 			fmt.Errorf("resource allocation %s expandable reservation value mis-match", allocType)
 		}
 		if strconv.FormatInt(allocInfo.Limit, 10) != attributes[fmt.Sprintf("%s.0.limit", allocType)] {

@@ -91,14 +91,18 @@ func resourceVsphereVMCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+	
+	cpuHotAddEnabled := true
+	cpuHotRemoveEnabled := true
+	memoryHotAddEnabled := true
 
 	clonespec := types.VirtualMachineCloneSpec{
 		Config: &types.VirtualMachineConfigSpec{
 			NumCPUs:             d.Get("cpus").(int),
 			MemoryMB:            int64(d.Get("memory_mb").(int)),
-			CpuHotAddEnabled:    true,
-			CpuHotRemoveEnabled: true,
-			MemoryHotAddEnabled: true,
+			CpuHotAddEnabled:    &cpuHotAddEnabled,
+			CpuHotRemoveEnabled: &cpuHotRemoveEnabled,
+			MemoryHotAddEnabled: &memoryHotAddEnabled,
 		},
 		Location: types.VirtualMachineRelocateSpec{
 			Pool: &rpRef,

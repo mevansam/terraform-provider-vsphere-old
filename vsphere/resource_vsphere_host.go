@@ -107,7 +107,7 @@ func resourceVsphereHostCreate(d *schema.ResourceData, meta interface{}) error {
 			
 			clusterName := v.(string)
 			
-			cluster, err := finder.Cluster(context.Background(), clusterName)
+			cluster, err := finder.ClusterComputeResource(context.Background(), clusterName)
 			if err != nil {
 				log.Printf("[ERROR] Cluster '%s' to which host '%s' should be added was not found", clusterName, hostName)
 				return err

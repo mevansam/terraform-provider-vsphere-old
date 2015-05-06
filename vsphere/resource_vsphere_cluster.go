@@ -9,6 +9,7 @@ import (
 	
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -114,7 +115,7 @@ func resourceVsphereClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	
-	cluster, err := finder.Cluster(context.Background(), d.Get("name").(string))
+	cluster, err := finder.ClusterComputeResource(context.Background(), d.Get("name").(string))
 	if err != nil {		
 		log.Printf("[DEBUG] Creating the cluster: %s", d.Get("name").(string))
 		
@@ -147,24 +148,24 @@ func resourceVsphereClusterRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	
-	config, err := cluster.Configuration(context.Background())
+	config, err := getConfiguration(context.Background(), cluster)
 	if err != nil {
 		log.Printf("[ERROR] Unable read cluster configuration: '%s'", d.Id())
 		return err
 	}
 	
-	if config.DrsConfig.Enabled {
+	if *config.DrsConfig.Enabled {
 		drs := make(map[string]interface{})
-		drs["enable_vm_automation_override"] = strconv.FormatBool(config.DrsConfig.EnableVmBehaviorOverrides)
+		drs["enable_vm_automation_override"] = strconv.FormatBool(*config.DrsConfig.EnableVmBehaviorOverrides)
 		drs["migration_threshold"] = strconv.Itoa(config.DrsConfig.VmotionRate)
 		drs["default_automation_level"] = string(config.DrsConfig.DefaultVmBehavior)		
 		d.Set("drs", append(make([]map[string]interface{}, 0, 1), drs))
 	}
-	if config.DasConfig.Enabled {
+	if *config.DasConfig.Enabled {
 		ha := make(map[string]interface{})	
 		ha["vm_monitoring"] = config.DasConfig.VmMonitoring
 		ha["host_monitoring"] = config.DasConfig.HostMonitoring
-		ha["admissionControlEnabled"] = strconv.FormatBool(config.DasConfig.AdmissionControlEnabled)
+		ha["admissionControlEnabled"] = strconv.FormatBool(*config.DasConfig.AdmissionControlEnabled)
 		d.Set("ha", append(make([]map[string]interface{}, 0, 1), ha))
  	}
 		
@@ -236,7 +237,7 @@ func findCluster(d *schema.ResourceData, meta interface{}) (*object.ClusterCompu
 		return nil, err
 	}
 	
-	cluster, err := finder.Cluster(context.Background(), d.Id())
+	cluster, err := finder.ClusterComputeResource(context.Background(), d.Id())
 	if err != nil {
 		log.Printf("[ERROR] Unable find cluster: '%s'", d.Get("name").(string))
 		return nil, err
@@ -253,11 +254,14 @@ func getClusterDrsConfigInfo(d *schema.ResourceData) (*types.ClusterDrsConfigInf
 	}
 	if drsCount == 1 {
 		
+		drsConfigEnabled := true
+		
 		drsConfig := &types.ClusterDrsConfigInfo {}
-		drsConfig.Enabled = true
+		drsConfig.Enabled = &drsConfigEnabled
 		
 		if v, ok := d.GetOk("drs.0.enable_vm_automation_override"); ok {
-			drsConfig.EnableVmBehaviorOverrides = v.(bool)
+			enableVmBehaviorOverrides := v.(bool)
+			drsConfig.EnableVmBehaviorOverrides = &enableVmBehaviorOverrides
 		}
 		if v, ok := d.GetOk("drs.0.migration_threshold"); ok {
 			drsConfig.VmotionRate = v.(int)
@@ -285,8 +289,10 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 	}
 	if haCount == 1 {
 		
+		dasConfigEnabled := true
+		
 		dasConfig := &types.ClusterDasConfigInfo {}
-		dasConfig.Enabled = true
+		dasConfig.Enabled = &dasConfigEnabled
 		
 		if v, ok := d.GetOk("ha.0.vm_monitoring"); ok {
 			vmMonitoring := v.(string)
@@ -306,7 +312,8 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 			dasConfig.HostMonitoring = hostMonitoring
 		}
 		if v, ok := d.GetOk("ha.0.admissionControlEnabled"); ok {
-			dasConfig.AdmissionControlEnabled = v.(bool)
+			admissionControlEnabled := v.(bool)
+			dasConfig.AdmissionControlEnabled = &admissionControlEnabled
 		}
 		if d.Get("ha.0.admissionControlPolicy.#").(int) > 0 {
 			var props []types.DynamicProperty
@@ -327,4 +334,16 @@ func getClusterDasConfigInfo(d *schema.ResourceData) (*types.ClusterDasConfigInf
 	}
 	
 	return nil, nil
+}
+
+func getConfiguration(ctx context.Context, cluster *object.ClusterComputeResource) (*types.ClusterConfigInfo, error) {	
+	var mccr mo.ClusterComputeResource
+	
+	ps := []string{"configuration"}
+	err := cluster.Properties(ctx, cluster.Reference(), ps, &mccr)
+	if err != nil {
+		return nil, err
+	}
+	
+	return &mccr.Configuration, nil
 }
