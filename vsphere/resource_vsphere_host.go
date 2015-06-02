@@ -21,8 +21,8 @@ func resourceVsphereHost() *schema.Resource {
 		
 		Create: resourceVsphereHostCreate,
 		Read:   resourceVsphereHostRead,
+		Update: resourceVsphereHostUpdate,
 		Delete: resourceVsphereHostDelete,
-
 
 		Schema: map[string]*schema.Schema{
 			
@@ -187,6 +187,13 @@ func resourceVsphereHostRead(d *schema.ResourceData, meta interface{}) error {
 	}	
 
 	d.Set("object_id", hostSystem.Reference().Value) 
+	return nil
+}
+
+func resourceVsphereHostUpdate(d *schema.ResourceData, meta interface{}) error {
+	
+	// TODO: Implement updates
+	
 	return nil
 }
 
