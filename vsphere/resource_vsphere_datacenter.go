@@ -24,10 +24,12 @@ func resourceVsphereDatacenter() *schema.Resource {
 			"name": &schema.Schema{
 				Type: schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},			
 			"keep": &schema.Schema{
 				Type: schema.TypeBool,
 				Optional: true,
+				ForceNew: true,
 			},			
 			"object_id": &schema.Schema{
 				Type: schema.TypeString,
