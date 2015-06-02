@@ -107,7 +107,7 @@ func resourceVsphereResourcePoolCreate(d *schema.ResourceData, meta interface{})
 	resourcePool, err := findResourcePool(d, meta)
 	if err != nil {
 		
-		if err.Error() == fmt.Sprintf("resource pool %s was not found", d.Get("name").(string)) {
+		if strings.Contains(err.Error(), "not found") {
 			
 			finder, _, err := getFinder(d, meta)
 			if err != nil {
@@ -253,7 +253,7 @@ func getResourcePool(name string, parent string, finder *find.Finder) (*object.R
 	
 	resourcePoolList, err := finder.ResourcePoolList(context.Background(), searchPath)
 	if err != nil {
-		log.Printf("[ERROR] VMOMI error when searching for resource pool at path '%s'", searchPath)
+		log.Printf("[ERROR] VMOMI error when searching for resource pool at path '%s': %s", searchPath, err.Error())
 		return nil, err
 	}
 
