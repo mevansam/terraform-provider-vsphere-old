@@ -16,17 +16,17 @@ func Provider() terraform.ResourceProvider {
 	
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"vsphere_host": &schema.Schema{
+			"host": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VSPHERE_HOST", nil),
 			},
-			"vsphere_username": &schema.Schema{
+			"username": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VSPHERE_USERNAME", nil),
 			},
-			"vsphere_password": &schema.Schema{
+			"password": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VSPHERE_PASSWORD", nil),
@@ -48,9 +48,9 @@ func Provider() terraform.ResourceProvider {
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	
 	config := Config{
-		Host: d.Get("vsphere_host").(string),
-		Username: d.Get("vsphere_username").(string),
-		Password: d.Get("vsphere_password").(string),
+		Host: d.Get("host").(string),
+		Username: d.Get("username").(string),
+		Password: d.Get("password").(string),
 	}
 	return config.Client()
 }
