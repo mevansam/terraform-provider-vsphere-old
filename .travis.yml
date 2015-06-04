@@ -1,0 +1,11 @@
+language: go
+
+go: 1.4.1
+
+install:
+  - export PATH=$PATH:$HOME/gopath/bin
+  - go get github.com/tools/godep
+  - godep restore
+
+script:
+  - export TF_ACC=1
