@@ -1,6 +1,6 @@
-# Terraform VMWare vSphere plug-in [![Build Status](https://travis-ci.org/mevansam/terraform-provider-vsphere.svg?branch=master)](https://travis-ci.org/mevansam/terraform-provider-vsphere)
+# Terraform VMWare vSphere Provider [![Build Status](https://travis-ci.org/mevansam/terraform-provider-vsphere.svg?branch=master)](https://travis-ci.org/mevansam/terraform-provider-vsphere)
 
-You can use Tte VMWare vSphere provider for [Terraform](https://terraform.io/) to create and configure virtualized infrastructure on a vSphere environment. 
+You can use the vSphere provider for [Terraform](https://terraform.io/) to create and configure virtualized infrastructure on a vSphere environment. 
 
 ## License and Contributors
 
