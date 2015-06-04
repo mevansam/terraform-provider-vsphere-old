@@ -1,0 +1,111 @@
+{
+	"ImportPath": "github.com/mevansam/terraform-provider-vsphere",
+	"GoVersion": "go1.4.1",
+	"Deps": [
+		{
+			"ImportPath": "github.com/hashicorp/errwrap",
+			"Rev": "7554cd9344cec97297fa6649b055a8c98c2a1e55"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/go-multierror",
+			"Rev": "fcdddc395df1ddf4247c69bd436e84cfa0733f7e"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/hcl",
+			"Rev": "513e04c400ee2e81e97f5e011c08fb42c6f69b84"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/config",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/dag",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/dot",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/flatmap",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/helper/hashcode",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/helper/multierror",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/helper/schema",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/helper/url",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/plugin",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/rpc",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/terraform/terraform",
+			"Comment": "v0.5.3-10-g79a18dc",
+			"Rev": "79a18dc16b715d5de68d47d22178bf6ec199af91"
+		},
+		{
+			"ImportPath": "github.com/hashicorp/yamux",
+			"Rev": "b2e55852ddaf823a85c67f798080eb7d08acd71d"
+		},
+		{
+			"ImportPath": "github.com/kr/pretty",
+			"Comment": "go.weekly.2011-12-22-26-gcb0850c",
+			"Rev": "cb0850c1681cbca3233e84f7e6ec3e4c3f352085"
+		},
+		{
+			"ImportPath": "github.com/kr/text",
+			"Rev": "6807e777504f54ad073ecef66747de158294b639"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/copystructure",
+			"Rev": "6fc66267e9da7d155a9d3bd489e00dad02666dc6"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/go-homedir",
+			"Rev": "1f6da4a72e57d4e7edd4a7295a585e0a3999a2d4"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/mapstructure",
+			"Rev": "bb4fbaf540ca2f7057d3adb5765784d24d9fd801"
+		},
+		{
+			"ImportPath": "github.com/mitchellh/reflectwalk",
+			"Rev": "eecf4c70c626c7cfbb95c90195bc34d386c74ac6"
+		},
+		{
+			"ImportPath": "github.com/vmware/govmomi",
+			"Comment": "fc23b06-8-ga31c97a",
+			"Rev": "a31c97a9acc012fb2f6faca441e78f0c3d1e67df"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a74a0672349d0bb67e7d25f8e88944019c98a73b"
+		}
+	]
+}
